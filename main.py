@@ -80,6 +80,6 @@ while True:
     restrictions = extract_restrictions(doc)
     print("Restrictions:", restrictions)
 
-    # Ask for food recommendations based on extracted information
+    # TODO: food recommendations based on extracted information
     # ...
 
