@@ -1,80 +1,108 @@
 import spacy
+import re
 
 nlp = spacy.load('en_core_web_sm')
 
-# define the prompts for each user input
-prompts = {
-    'name': 'What\'s your name?',
-    'weight': 'Can you tell me your weight?',
-    'height': 'And how tall are you?',
-    'gender': 'Are you male or female?',
-    'diseases': 'Do you have any diseases or health conditions?',
-    'restrictions': 'Do you have any food restrictions, like allergies or dietary preferences?',
-    'preferences': 'What types of food do you like or dislike?'
-}
+user_profile = {}
 
-# define the meal suggestions based on user preferences
-meal_suggestions = {
-    'spicy': 'Spicy tofu stir-fry with brown rice and steamed vegetables',
-    'vegetarian': 'Lentil soup with a side salad and whole grain bread',
-    'lactose intolerant': 'Veggie burger with sweet potato fries and a side of roasted Brussels sprouts'
-}
+def ask_question(question):
+    answer = input(question + "\n")
+    return answer
 
-# define the function to extract user information from input text
-def extract_user_info(text):
-    doc = nlp(text)
-    name = ''
-    weight = ''
-    height = ''
-    gender = ''
-    diseases = ''
-    restrictions = ''
-    preferences = ''
+def extract_name(doc):
+    name = None
+
+    # Extract name using spaCy NER
     for ent in doc.ents:
-        if ent.label_ == 'PERSON':
+        if ent.label_ == "PERSON":
             name = ent.text
-        elif ent.label_ == 'QUANTITY' and 'weight' in ent.text.lower():
-            weight = ent.text.split()[0]
-        elif ent.label_ == 'QUANTITY' and 'height' in ent.text.lower():
-            height = ent.text.split()[0]
-        elif ent.label_ == 'GENDER':
-            gender = ent.text
-        elif ent.label_ == 'DISEASE':
-            diseases = ent.text
-        elif ent.label_ == 'FOOD_RESTRICTION':
-            restrictions = ent.text
-        elif ent.label_ == 'FOOD_PREFERENCE':
-            preferences = ent.text
-    return {
-        'name': name,
-        'weight': weight,
-        'height': height,
-        'gender': gender,
-        'diseases': diseases,
-        'restrictions': restrictions,
-        'preferences': preferences
-    }
 
-# define the main function for the chatbot
-def food_recommendation_chatbot():
-    print('Hi there! I\'m your food recommendation chatbot.')
-    user_info = {}
-    for key in prompts.keys():
-        while not user_info.get(key):
-            input_text = input(prompts[key])
-            user_info.update(extract_user_info(input_text))
-    print('Based on your profile, I recommend a balanced diet with a focus on low glycemic index foods and plenty of '
-          'fiber. Here are some meal suggestions based on your preferences:')
-    meal_options = []
-    for pref in user_info['preferences'].split():
-        if pref in meal_suggestions.keys():
-            meal_options.append(meal_suggestions[pref])
-    if meal_options:
-        for meal in meal_options:
-            print('- ' + meal)
-    else:
-        print('Sorry, I don\'t have any meal suggestions that match your preferences.')
-    print('Enjoy your meal!')
+    return name
 
-# run the chatbot
-food_recommendation_chatbot()
+def extract_weight(doc):
+    weight = None
+
+    # Extract weight using regular expressions
+    weight_regex = r"(\d+(\.\d+)?)\s*(kg|lbs)"
+    matches = re.findall(weight_regex, doc.text)
+    if matches:
+        weight, _ = matches[0]
+        weight = float(weight)
+
+    return weight
+
+def extract_height(doc):
+    height = None
+
+    # Extract height using spaCy NER
+    for ent in doc.ents:
+        if ent.label_ == "HEIGHT":
+            height = int(ent.text)
+
+    return height
+
+def extract_gender(doc):
+    gender = None
+
+    # Extract gender using spaCy NER
+    for ent in doc.ents:
+        if ent.label_ == "GENDER":
+            gender = ent.text.lower()
+
+    return gender
+
+# TODO: Extract disease
+
+# TODO: Extract restrictions
+
+# TODO: Extract preference
+
+# Main program loop
+questions = [("What's your name?", extract_name),
+             # ("What's your weight?", extract_weight),
+             ("What's your height?", extract_height),
+             ("What's your gender?", extract_gender)]
+
+for question, extraction_func in questions:
+    answer = ask_question(question)
+    doc = nlp(answer)
+    extracted_value = extraction_func(doc)
+
+    while extracted_value is None:
+        print("Sorry, I didn't understand your answer. Please try again.")
+        answer = ask_question(question)
+        doc = nlp(answer)
+        extracted_value = extraction_func(doc)
+
+    user_profile[extraction_func.__name__.replace("extract_", "")] = extracted_value
+
+print("Thank you for providing your information!")
+print(user_profile)
+#
+# while True:
+#     print("Welcome to the food recommendation chatbot!")
+#     print("I am your Foodvisor.")
+#     print("What’s your name?")
+#
+#     # Ask for user input and perform natural language understanding with spaCy
+#     answer = input()
+#     doc = nlp(answer)
+#
+#     # Extract name, weight, height, and gender
+#     name = extract_name(doc)
+#     print("Name:", name)
+#     weight = extract_weight(doc)
+#     print("Weight:", weight)
+#     height = extract_height(doc)
+#     print("Height:", height)
+#     gender = extract_gender(doc)
+#     print("Gender:", gender)
+
+    # Extract history of diseases and dietary restrictions using regular expressions??
+    # diseases = extract_diseases(doc)
+    # print("Diseases:", diseases)
+    # restrictions = extract_restrictions(doc)
+    # print("Restrictions:", restrictions)
+
+    # TODO: food recommendations based on extracted information
+    # ...
