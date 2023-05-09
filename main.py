@@ -1,108 +1,172 @@
 import spacy
 import re
+from spacy.matcher import Matcher
 
-nlp = spacy.load('en_core_web_sm')
+nlp = spacy.load("en_core_web_sm")
+matcher = Matcher(nlp.vocab)
 
 user_profile = {}
+
 
 def ask_question(question):
     answer = input(question + "\n")
     return answer
 
+
 def extract_name(doc):
     name = None
 
-    # Extract name using spaCy NER
     for ent in doc.ents:
         if ent.label_ == "PERSON":
             name = ent.text
 
     return name
 
-def extract_weight(doc):
-    weight = None
-
-    # Extract weight using regular expressions
-    weight_regex = r"(\d+(\.\d+)?)\s*(kg|lbs)"
-    matches = re.findall(weight_regex, doc.text)
-    if matches:
-        weight, _ = matches[0]
-        weight = float(weight)
-
-    return weight
-
-def extract_height(doc):
-    height = None
-
-    # Extract height using spaCy NER
-    for ent in doc.ents:
-        if ent.label_ == "HEIGHT":
-            height = int(ent.text)
-
-    return height
 
 def extract_gender(doc):
-    gender = None
+    gender_pattern = r"\b(male|female|non-binary|transgender|other)\b"
+    match = re.search(gender_pattern, doc, re.IGNORECASE)
+    if match:
+        gender = match.group(1).lower()
+        if gender == "male":
+            return "male"
+        elif gender == "female":
+            return "female"
+        else:
+            return gender
+    else:
+        return None
 
-    # Extract gender using spaCy NER
-    for ent in doc.ents:
-        if ent.label_ == "GENDER":
-            gender = ent.text.lower()
 
-    return gender
+def extract_weight(doc):
+    weight_pattern = r"\b(\d+(?:\.\d+)?)\s*(?:kgs?|kilograms?)?\b"
+    match = re.search(weight_pattern, doc, re.IGNORECASE)
+    if match:
+        weight = float(match.group(1))
+        return weight
+    else:
+        return None
 
-# TODO: Extract disease
 
-# TODO: Extract restrictions
+def extract_height(doc):
+    height_pattern = r"\b(\d+(?:\.\d+)?)\s*(cm|centimeters?|m|meters?|in|inches?|ft|feet?)\b"
+    match = re.search(height_pattern, doc, re.IGNORECASE)
+    if match:
+        height = float(match.group(1))
+        unit = match.group(2).lower()
+        if unit in ["cm", "centimeter", "centimeters"]:
+            return height
+        elif unit in ["m", "meter", "meters"]:
+            return height * 100
+        elif unit in ["in", "inch", "inches"]:
+            return height * 2.54
+        elif unit in ["ft", "foot", "feet"]:
+            return height * 30.48
+    else:
+        return None
+
+
+def extract_diseases(text):
+    disease_name = []
+
+    if "disease" in text.lower():
+        # extract the disease name from the user's response
+        # and return it as a string
+        return disease_name
+    else:
+        return None
+
+
+def extract_restrictions(text):
+    restrictions = []
+    if "vegan" in text.lower():
+        restrictions.append("vegan")
+    if "vegetarian" in text.lower():
+        restrictions.append("vegetarian")
+    # extract other dietary restrictions from the user's response
+    # and append them to the restrictions list
+    return restrictions
+
 
 # TODO: Extract preference
 
-# Main program loop
-questions = [("What's your name?", extract_name),
-             # ("What's your weight?", extract_weight),
-             ("What's your height?", extract_height),
-             ("What's your gender?", extract_gender)]
 
-for question, extraction_func in questions:
-    answer = ask_question(question)
-    doc = nlp(answer)
-    extracted_value = extraction_func(doc)
+def food_recommendation_chatbot():
+    # Ask for the user's name
+    while True:
+        name = input("What's your name? ")
+        if extract_name(nlp(name)):
+            print(f"\nHello {name}, nice to meet you! I need some basic information to start customizing your plan.")
+            break
+        else:
+            print("I'm sorry, I didn't catch your name. Can you please try again? ")
 
-    while extracted_value is None:
-        print("Sorry, I didn't understand your answer. Please try again.")
-        answer = ask_question(question)
-        doc = nlp(answer)
-        extracted_value = extraction_func(doc)
+    # Ask for the user's gender
+    while True:
+        gender = input("\nWhat's your gender? Female or male? ")
+        if extract_gender(gender):
+            break
+        else:
+            print("I'm sorry, I didn't catch your gender. Can you please try again? ")
 
-    user_profile[extraction_func.__name__.replace("extract_", "")] = extracted_value
+    # Ask for the user's weight
+    while True:
+        weight = input("\nHow much do you weigh? (e.g. 70 kg, 150 lbs) ")
+        if extract_weight(weight):
+            print(weight)
+            break
+        else:
+            print("I'm sorry, I didn't catch your weight. Can you please try again? ")
 
-print("Thank you for providing your information!")
-print(user_profile)
-#
-# while True:
-#     print("Welcome to the food recommendation chatbot!")
-#     print("I am your Foodvisor.")
-#     print("What’s your name?")
-#
-#     # Ask for user input and perform natural language understanding with spaCy
-#     answer = input()
-#     doc = nlp(answer)
-#
-#     # Extract name, weight, height, and gender
-#     name = extract_name(doc)
-#     print("Name:", name)
-#     weight = extract_weight(doc)
-#     print("Weight:", weight)
-#     height = extract_height(doc)
-#     print("Height:", height)
-#     gender = extract_gender(doc)
-#     print("Gender:", gender)
+    # Ask for the user's height
+    while True:
+        height = input("\nHow tall are you? (e.g. 170 cm, 1.7 m) ")
+        if extract_height(height):
+            print(height)
+            break
+        else:
+            print("I'm sorry, I didn't catch your height. Can you please try again? ")
 
-    # Extract history of diseases and dietary restrictions using regular expressions??
-    # diseases = extract_diseases(doc)
-    # print("Diseases:", diseases)
-    # restrictions = extract_restrictions(doc)
-    # print("Restrictions:", restrictions)
+    # Ask for the user's diseases
+    diseases = []
+    while True:
+        response = input("\nDo you have any diseases or health conditions? (yes or no) ")
+        if "yes" in response.lower():
+            disease = input("\nWhat disease or health condition do you have? ")
+            diseases.append(disease)
+            more_diseases = input("\nDo you have any more diseases or health conditions? (yes or no) ")
+            if "no" in more_diseases.lower():
+                break
+        elif "no" in response.lower():
+            break
+        else:
+            print("I'm sorry, I didn't catch your response. Can you please try again? ")
 
-    # TODO: food recommendations based on extracted information
-    # ...
+    # Ask for the user's dietary restrictions
+    restrictions = []
+    while True:
+        response = input("\nDo you have any dietary restrictions? (yes or no)")
+        if "yes" in response.lower():
+            restriction = input("\nWhat dietary restriction do you have?")
+            restrictions.append(restriction)
+            more_restrictions = input("\nDo you have any more dietary restrictions? (yes or no)")
+            if "no" in more_restrictions.lower():
+                break
+        elif "no" in response.lower():
+            break
+        else:
+            print("I'm sorry, I didn't catch your response. Can you please try again? ")
+
+    # Make food recommendations based on the user's profile
+    if "vegan" in restrictions:
+        print("Here are some vegan food recommendations for you.")
+        # make vegan food recommendations based on the user's profile
+    elif "vegetarian" in restrictions:
+        print("Here are some vegetarian food recommendations for you.")
+        # make vegetarian food recommendations based on the user's profile
+    else:
+        print("Here are some food recommendations for you.")
+        # make food recommendations based on the user's profile
+
+
+food_recommendation_chatbot()
