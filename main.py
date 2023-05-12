@@ -8,24 +8,23 @@ matcher = Matcher(nlp.vocab)
 user_profile = {}
 
 
-def ask_question(question):
-    answer = input(question + "\n")
-    return answer
+# def ask_question(question):
+#     answer = input(question + "\n")
+#     return answer
 
 
-def extract_name(doc):
-    name = None
-
+# TODO: need improve
+def extract_name(text):
+    doc = nlp(text)
     for ent in doc.ents:
         if ent.label_ == "PERSON":
-            name = ent.text
+            return ent.text
+    return None
 
-    return name
 
-
-def extract_gender(doc):
-    gender_pattern = r"\b(male|female|non-binary|transgender|other)\b"
-    match = re.search(gender_pattern, doc, re.IGNORECASE)
+def extract_gender(text):
+    gender_pattern = r"\b(male|boy|man|female|girl|woman)\b"
+    match = re.search(gender_pattern, text, re.IGNORECASE)
     if match:
         gender = match.group(1).lower()
         if gender == "male":
@@ -33,14 +32,12 @@ def extract_gender(doc):
         elif gender == "female":
             return "female"
         else:
-            return gender
-    else:
-        return None
+            return None
 
 
-def extract_weight(doc):
+def extract_weight(text):
     weight_pattern = r"\b(\d+(?:\.\d+)?)\s*(?:kgs?|kilograms?)?\b"
-    match = re.search(weight_pattern, doc, re.IGNORECASE)
+    match = re.search(weight_pattern, text, re.IGNORECASE)
     if match:
         weight = float(match.group(1))
         return weight
@@ -48,9 +45,9 @@ def extract_weight(doc):
         return None
 
 
-def extract_height(doc):
+def extract_height(text):
     height_pattern = r"\b(\d+(?:\.\d+)?)\s*(cm|centimeters?|m|meters?|in|inches?|ft|feet?)\b"
-    match = re.search(height_pattern, doc, re.IGNORECASE)
+    match = re.search(height_pattern, text, re.IGNORECASE)
     if match:
         height = float(match.group(1))
         unit = match.group(2).lower()
@@ -66,6 +63,7 @@ def extract_height(doc):
         return None
 
 
+# TODO: need improvement
 def extract_diseases(text):
     disease_name = []
 
@@ -77,6 +75,7 @@ def extract_diseases(text):
         return None
 
 
+# TODO: need improvement
 def extract_restrictions(text):
     restrictions = []
     if "vegan" in text.lower():
@@ -95,8 +94,9 @@ def food_recommendation_chatbot():
     # Ask for the user's name
     while True:
         name = input("What's your name? ")
-        if extract_name(nlp(name)):
-            print(f"\nHello {name}, nice to meet you! I need some basic information to start customizing your plan.")
+        if extract_name(name):
+            print(f"\nHello {extract_name(name)}, nice to meet you! \nI need some basic information to start "
+                  f"customizing your plan.")
             break
         else:
             print("I'm sorry, I didn't catch your name. Can you please try again? ")
@@ -105,6 +105,7 @@ def food_recommendation_chatbot():
     while True:
         gender = input("\nWhat's your gender? Female or male? ")
         if extract_gender(gender):
+            print(f"gender = {extract_gender(gender)}")
             break
         else:
             print("I'm sorry, I didn't catch your gender. Can you please try again? ")
@@ -113,7 +114,7 @@ def food_recommendation_chatbot():
     while True:
         weight = input("\nHow much do you weigh? (e.g. 70 kg, 150 lbs) ")
         if extract_weight(weight):
-            print(weight)
+            print(extract_weight(weight))
             break
         else:
             print("I'm sorry, I didn't catch your weight. Can you please try again? ")
@@ -122,7 +123,7 @@ def food_recommendation_chatbot():
     while True:
         height = input("\nHow tall are you? (e.g. 170 cm, 1.7 m) ")
         if extract_height(height):
-            print(height)
+            print(extract_height(height))
             break
         else:
             print("I'm sorry, I didn't catch your height. Can you please try again? ")
@@ -145,28 +146,28 @@ def food_recommendation_chatbot():
     # Ask for the user's dietary restrictions
     restrictions = []
     while True:
-        response = input("\nDo you have any dietary restrictions? (yes or no)")
+        response = input("\nDo you have any allergies? (yes or no) ")
         if "yes" in response.lower():
-            restriction = input("\nWhat dietary restriction do you have?")
+            restriction = input("\nWhat allergy you have? (e.g. seafood, nut) ")
             restrictions.append(restriction)
-            more_restrictions = input("\nDo you have any more dietary restrictions? (yes or no)")
-            if "no" in more_restrictions.lower():
-                break
         elif "no" in response.lower():
             break
         else:
             print("I'm sorry, I didn't catch your response. Can you please try again? ")
 
-    # Make food recommendations based on the user's profile
-    if "vegan" in restrictions:
-        print("Here are some vegan food recommendations for you.")
-        # make vegan food recommendations based on the user's profile
-    elif "vegetarian" in restrictions:
-        print("Here are some vegetarian food recommendations for you.")
-        # make vegetarian food recommendations based on the user's profile
-    else:
-        print("Here are some food recommendations for you.")
-        # make food recommendations based on the user's profile
+    # Ask for the user's preference
+    preferences = []
+    while True:
+        response = input("\nWhich type of following cuisine you prefer:\n "
+                         "1. Chinese cuisine\n "
+                         "2. Indian cuisine\n "
+                         "3. Thai cuisine\n "
+                         "4. Italian cuisine\n "
+                         "5. American cuisine\n "
+                         "6. Japanese cuisine\n")
+        # TODO: catch the preference
+    # TODO: Make food recommendations based on the user's profile
+
 
 
 food_recommendation_chatbot()
